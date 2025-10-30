@@ -1,0 +1,116 @@
+`timescale 1ns / 1ps
+
+module tb_developmentboard;
+
+    // 输入信号
+    reg clk;
+    reg reset;
+    reg button;
+    reg B3, B4, B5;
+    
+    // 输出信号
+    wire h_sync;
+    wire v_sync;
+    wire [15:0] rgb;
+    wire led1, led2, led3, led4, led5;
+    
+    // 实例化被测单元
+    DevelopmentBoard uut (
+        .clk(clk),
+        .reset(reset),
+        .button(button),
+        .B3(B3),
+        .B4(B4),
+        .B5(B5),
+        .h_sync(h_sync),
+        .v_sync(v_sync),
+        .rgb(rgb),
+        .led1(led1),
+        .led2(led2),
+        .led3(led3),
+        .led4(led4),
+        .led5(led5)
+    );
+    
+    // 时钟生成 - 50MHz
+    always #10 clk = ~clk; // 20ns周期 = 50MHz
+    
+    // 测试序列
+    initial begin
+        // 初始化信号
+        clk = 0;
+        reset = 0;  // 激活复位
+        button = 1;
+        B3 = 1;
+        B4 = 1;
+        B5 = 1;
+        
+        $display("=== VGA状态机仿真测试开始 ===");
+        $display("时间: %t, 初始化完成", $time);
+        
+        // 释放复位
+        #100;
+        reset = 1;
+        $display("时间: %t, 复位释放", $time);
+        
+        // 等待几帧时间
+        #2000000; // 2ms
+        
+        // 测试状态切换 - 第一次按下按钮
+        $display("时间: %t, 第一次按下按钮 - 切换到MUST状态", $time);
+        button = 0;
+        #40; // 保持按下状态40ns
+        button = 1;
+        #1000000; // 等待1ms
+        
+        // 测试状态切换 - 第二次按下按钮
+        $display("时间: %t, 第二次按下按钮 - 切换到END状态", $time);
+        button = 0;
+        #40;
+        button = 1;
+        #1000000; // 等待1ms
+        
+        // 测试状态切换 - 第三次按下按钮
+        $display("时间: %t, 第三次按下按钮 - 切换回COLOR_BAR状态", $time);
+        button = 0;
+        #40;
+        button = 1;
+        #1000000; // 等待1ms
+        
+        // 测试复位功能
+        $display("时间: %t, 测试复位功能", $time);
+        reset = 0;
+        #100;
+        reset = 1;
+        #1000000; // 等待1ms
+        
+        $display("时间: %t, 仿真测试完成", $time);
+        $finish;
+    end
+    
+    // 监控状态变化
+    always @(posedge clk) begin
+        if (uut.display_controller_inst.state !== uut.display_controller_inst.state) begin
+            case (uut.display_controller_inst.state)
+                2'b00: $display("时间: %t, 状态: COLOR_BAR", $time);
+                2'b01: $display("时间: %t, 状态: MUST", $time);
+                2'b10: $display("时间: %t, 状态: END", $time);
+                default: $display("时间: %t, 状态: 未知", $time);
+            endcase
+        end
+    end
+    
+    // 简单的VGA时序检查
+    always @(posedge clk) begin
+        if (uut.vga_timing_inst.x_pos == 639 && uut.vga_timing_inst.y_pos == 479) begin
+            $display("时间: %t, 完成一帧显示", $time);
+        end
+    end
+    
+    // 生成VCD波形文件用于调试
+    initial begin
+        $dumpfile("waveform.vcd");
+        $dumpvars(0, tb_developmentboard);
+    end
+
+endmodule
