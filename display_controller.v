@@ -4,7 +4,7 @@ module display_controller(
     input  wire        clk,           
     input  wire        reset,         
     input  wire        button,        
-    output reg  [1:0]  state,        
+    output reg  [1:0]  state,         
     
     output reg  [7:0]  vga_red,       
     output reg  [7:0]  vga_green,     
@@ -12,20 +12,20 @@ module display_controller(
     
     input  wire [9:0]  x_pos,         
     input  wire [9:0]  y_pos,         
-    input  wire        display_enable
+    input  wire        display_enable 
 );
 
-    // 状态定义
+    
     parameter STATE_COLOR_BAR = 2'b00;
     parameter STATE_MUST      = 2'b01;
     parameter STATE_END       = 2'b10;
     
-    // 内部信号
+    
     reg [1:0] next_state;
     reg button_prev;
     wire button_pressed;
     
-    // 按钮边沿检测（检测上升沿）
+    
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             button_prev <= 1'b0;
@@ -36,7 +36,7 @@ module display_controller(
     
     assign button_pressed = button & ~button_prev;
     
-    // 状态寄存器
+    
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             state <= STATE_COLOR_BAR;
@@ -45,7 +45,7 @@ module display_controller(
         end
     end
     
-    // 状态转换逻辑
+    
     always @(*) begin
         next_state = state; 
         
@@ -59,9 +59,9 @@ module display_controller(
         end
     end
     
-    // 显示输出逻辑
+    
     always @(*) begin
-        // 默认黑色背景
+        
         vga_red   = 8'h00;
         vga_green = 8'h00;
         vga_blue  = 8'h00;
@@ -69,24 +69,24 @@ module display_controller(
         if (display_enable) begin
             case (state)
                 STATE_COLOR_BAR: begin
-                    // 彩条显示 - 四个垂直条
+                    
                     if (x_pos < 160) begin
-                        // 红色条
+                        
                         vga_red   = 8'hFF;
                         vga_green = 8'h00;
                         vga_blue  = 8'h00;
                     end else if (x_pos < 320) begin
-                        // 绿色条
+                        
                         vga_red   = 8'h00;
                         vga_green = 8'hFF;
                         vga_blue  = 8'h00;
                     end else if (x_pos < 480) begin
-                        // 蓝色条
+                        
                         vga_red   = 8'h00;
                         vga_green = 8'h00;
                         vga_blue  = 8'hFF;
                     end else begin
-                        // 黄色条
+                        
                         vga_red   = 8'hFF;
                         vga_green = 8'hFF;
                         vga_blue  = 8'h00;
@@ -94,21 +94,21 @@ module display_controller(
                 end
                 
                 STATE_MUST: begin
-                    // MUST字符显示 - 在屏幕中央显示白色"MUST"
+                    
                     if (is_in_must_area(x_pos, y_pos)) begin
                         if (is_must_pixel(x_pos, y_pos)) begin
-                            // MUST字符像素 - 白色
+                            
                             vga_red   = 8'hFF;
                             vga_green = 8'hFF;
                             vga_blue  = 8'hFF;
                         end else begin
-                            // MUST字符背景 - 黑色
+                            
                             vga_red   = 8'h00;
                             vga_green = 8'h00;
                             vga_blue  = 8'h00;
                         end
                     end else begin
-                        // 屏幕其他区域 - 黑色
+                        
                         vga_red   = 8'h00;
                         vga_green = 8'h00;
                         vga_blue  = 8'h00;
@@ -116,21 +116,21 @@ module display_controller(
                 end
                 
                 STATE_END: begin
-                    // END字符显示 - 在屏幕中央显示青色"END"
+                    
                     if (is_in_end_area(x_pos, y_pos)) begin
                         if (is_end_pixel(x_pos, y_pos)) begin
-                            // END字符像素 - 青色
+                            
                             vga_red   = 8'h00;
                             vga_green = 8'hFF;
                             vga_blue  = 8'hFF;
                         end else begin
-                            // END字符背景 - 黑色
+                            
                             vga_red   = 8'h00;
                             vga_green = 8'h00;
                             vga_blue  = 8'h00;
                         end
                     end else begin
-                        // 屏幕其他区域 - 黑色
+                        
                         vga_red   = 8'h00;
                         vga_green = 8'h00;
                         vga_blue  = 8'h00;
@@ -138,7 +138,7 @@ module display_controller(
                 end
                 
                 default: begin
-                    // 默认显示彩条
+                    
                     if (x_pos < 160) begin
                         vga_red   = 8'hFF;
                         vga_green = 8'h00;
@@ -161,11 +161,11 @@ module display_controller(
         end
     end
     
-    // MUST字符区域和像素判断函数
+    
     function is_in_must_area;
         input [9:0] x, y;
         begin
-            // MUST字符显示区域（居中）
+            
             is_in_must_area = (x >= 240 && x < 400) && (y >= 200 && y < 280);
         end
     endfunction
@@ -174,21 +174,21 @@ module display_controller(
         input [9:0] x, y;
         reg in_m, in_u, in_s, in_t;
         begin
-            // 简化字符形状 - 使用矩形区域近似
-            in_m = (x >= 250 && x < 290) && (y >= 200 && y < 280); // M区域
-            in_u = (x >= 300 && x < 340) && (y >= 200 && y < 280); // U区域
-            in_s = (x >= 350 && x < 390) && (y >= 200 && y < 280); // S区域
-            in_t = (x >= 400 && x < 440) && (y >= 200 && y < 280); // T区域
+            
+            in_m = (x >= 250 && x < 290) && (y >= 200 && y < 280); 
+            in_u = (x >= 300 && x < 340) && (y >= 200 && y < 280); 
+            in_s = (x >= 350 && x < 390) && (y >= 200 && y < 280); 
+            in_t = (x >= 400 && x < 440) && (y >= 200 && y < 280); 
             
             is_must_pixel = in_m || in_u || in_s || in_t;
         end
     endfunction
     
-    // END字符区域和像素判断函数
+    
     function is_in_end_area;
         input [9:0] x, y;
         begin
-            // END字符显示区域（居中）
+            
             is_in_end_area = (x >= 240 && x < 400) && (y >= 200 && y < 280);
         end
     endfunction
@@ -197,14 +197,13 @@ module display_controller(
         input [9:0] x, y;
         reg in_e, in_n, in_d;
         begin
-            // 简化字符形状 - 使用矩形区域近似
-            in_e = (x >= 250 && x < 290) && (y >= 200 && y < 280); // E区域
-            in_n = (x >= 300 && x < 340) && (y >= 200 && y < 280); // N区域
-            in_d = (x >= 350 && x < 390) && (y >= 200 && y < 280); // D区域
+            
+            in_e = (x >= 250 && x < 290) && (y >= 200 && y < 280); 
+            in_n = (x >= 300 && x < 340) && (y >= 200 && y < 280); 
+            in_d = (x >= 350 && x < 390) && (y >= 200 && y < 280); 
             
             is_end_pixel = in_e || in_n || in_d;
         end
     endfunction
-
 
 endmodule
