@@ -1,18 +1,18 @@
 `timescale 1ns / 1ns
 
 module display_controller(
-    input  wire        clk,           // 时钟信号
-    input  wire        reset,         // 复位信号
-    input  wire        button,        // 按钮输入（状态切换）
-    output reg  [1:0]  state,         // 当前状态输出
+    input  wire        clk,           
+    input  wire        reset,         
+    input  wire        button,        
+    output reg  [1:0]  state,        
     
-    output reg  [7:0]  vga_red,       // VGA红色分量
-    output reg  [7:0]  vga_green,     // VGA绿色分量
-    output reg  [7:0]  vga_blue,      // VGA蓝色分量
+    output reg  [7:0]  vga_red,       
+    output reg  [7:0]  vga_green,     
+    output reg  [7:0]  vga_blue,      
     
-    input  wire [9:0]  x_pos,         // 当前像素X坐标
-    input  wire [9:0]  y_pos,         // 当前像素Y坐标
-    input  wire        display_enable // 显示使能信号
+    input  wire [9:0]  x_pos,         
+    input  wire [9:0]  y_pos,         
+    input  wire        display_enable
 );
 
     // 状态定义
@@ -47,7 +47,7 @@ module display_controller(
     
     // 状态转换逻辑
     always @(*) begin
-        next_state = state; // 默认保持当前状态
+        next_state = state; 
         
         if (button_pressed) begin
             case (state)
@@ -205,5 +205,6 @@ module display_controller(
             is_end_pixel = in_e || in_n || in_d;
         end
     endfunction
+
 
 endmodule
